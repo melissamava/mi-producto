@@ -1,0 +1,165 @@
+<title>Prototipo T3 Pix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una sola pantalla de app a alto completo; una pantalla visible a la vez. Tema único claro, a propósito (simula la app). */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#14202b; --muted:#5d6b78; --line:#dde3e9;
+  --brand:#0f5fd7; --brand-ink:#ffffff; --cam:#0b1117; --cam-ink:#e8eef4;
+  --font:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;-webkit-tap-highlight-color:transparent}
+.app{height:100%;display:flex;flex-direction:column;max-width:440px;margin:0 auto;background:var(--bg);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:12px 20px}
+.app.dark{background:var(--cam);color:var(--cam-ink)}
+body.darkbg{background:var(--cam)}
+.top{display:flex;align-items:center;gap:8px;min-height:44px}
+.top h1{font-size:17px;font-weight:600;margin:0;flex:1}
+.back{appearance:none;border:0;background:transparent;color:inherit;font:600 26px/1 var(--font);width:44px;height:44px;margin-left:-10px;cursor:pointer;border-radius:10px}
+.back:focus-visible,.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.badge{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:inherit;opacity:.7;border:1px dashed currentColor;border-radius:6px;padding:4px 8px;user-select:none;cursor:default}
+.screen{flex:1;display:flex;flex-direction:column;gap:16px;padding-top:20px}
+.q{font-size:24px;font-weight:700;margin:0 0 4px;text-wrap:balance;line-height:1.25}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{appearance:none;display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px;font:600 17px var(--font);color:var(--ink);cursor:pointer;min-height:72px}
+.opt svg{flex:none}
+.opt .chev{margin-left:auto;color:var(--muted);font-size:22px}
+.cam{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.finder{width:min(70vw,260px);aspect-ratio:1;max-width:100%;position:relative}
+.finder i{position:absolute;width:44px;height:44px;border:4px solid var(--cam-ink)}
+.finder i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-top-left-radius:12px}
+.finder i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-top-right-radius:12px}
+.finder i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-bottom-left-radius:12px}
+.finder i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-bottom-right-radius:12px}
+.cam p{margin:0;font-size:16px}
+.cam small{opacity:.6;font-size:12px}
+label{font-weight:600;font-size:15px}
+input{font:500 20px var(--font);padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box}
+input:focus{outline:2px solid var(--brand);border-color:var(--brand)}
+.field{display:flex;flex-direction:column;gap:8px}
+.spacer{flex:1}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--brand);color:var(--brand-ink);font:600 17px var(--font);min-height:54px;width:100%;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:default}
+.end{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;color:var(--muted)}
+.end h2{color:var(--ink);margin:0;font-size:22px}
+.panel{position:fixed;inset:auto 0 0 0;background:#14202b;color:#fff;padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));font-size:13px;display:flex;flex-direction:column;gap:10px;max-height:65%;overflow:auto;z-index:5}
+.panel pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace, Menlo, monospace}
+.panel .acts{display:flex;gap:8px;flex-wrap:wrap}
+.panel button{appearance:none;border:1px solid #fff6;background:transparent;color:#fff;border-radius:8px;padding:8px 12px;font:600 13px var(--font);cursor:pointer}
+.panel button[aria-pressed="true"]{background:#fff;color:#14202b}
+</style>
+
+<div class="app" id="app">
+  <div class="top">
+    <button class="back" id="b-back" type="button" aria-label="Volver" hidden>‹</button>
+    <h1 id="title">Pagar con Pix</h1>
+    <span class="badge" id="badge" title="Prototipo de prueba">Prototipo</span>
+  </div>
+
+  <!-- 1. Pregunta -->
+  <section class="screen" id="s-pregunta">
+    <p class="q">¿Te muestran un código o te dictan un número?</p>
+    <div class="opts">
+      <button class="opt" id="o-codigo" type="button">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.4"><rect x="4" y="4" width="9" height="9" rx="1.5"/><rect x="19" y="4" width="9" height="9" rx="1.5"/><rect x="4" y="19" width="9" height="9" rx="1.5"/></g><g fill="currentColor"><rect x="19" y="19" width="4" height="4"/><rect x="24" y="24" width="4" height="4"/><rect x="24" y="19" width="4" height="3"/><rect x="19" y="25" width="3" height="3"/></g></svg>
+        Me muestran un código <span class="chev" aria-hidden="true">›</span>
+      </button>
+      <button class="opt" id="o-numero" type="button">
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><g fill="currentColor"><circle cx="8" cy="7" r="2.6"/><circle cx="16" cy="7" r="2.6"/><circle cx="24" cy="7" r="2.6"/><circle cx="8" cy="15" r="2.6"/><circle cx="16" cy="15" r="2.6"/><circle cx="24" cy="15" r="2.6"/><circle cx="8" cy="23" r="2.6"/><circle cx="16" cy="23" r="2.6"/><circle cx="24" cy="23" r="2.6"/></g></svg>
+        Me dictan un número <span class="chev" aria-hidden="true">›</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 2a. Cámara simulada -->
+  <section class="screen" id="s-camara" hidden>
+    <div class="cam">
+      <div class="finder" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p>Apunta la cámara al código</p>
+      <small>Cámara simulada para la prueba</small>
+    </div>
+  </section>
+
+  <!-- 2b. Campo de llave -->
+  <section class="screen" id="s-llave" hidden>
+    <div class="field">
+      <label for="i-llave">Llave Pix</label>
+      <input id="i-llave" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="b-continuar" type="button" disabled>Continuar</button>
+  </section>
+
+  <!-- Fin -->
+  <section class="screen" id="s-fin" hidden>
+    <div class="end">
+      <h2>Fin de esta tarea</h2>
+      <p>El prototipo llega hasta aquí.</p>
+    </div>
+  </section>
+</div>
+
+<div class="panel" id="panel" hidden>
+  <strong>Panel del facilitador</strong>
+  <div class="acts">
+    <span style="align-self:center">Escenario:</span>
+    <button type="button" id="p-a" aria-pressed="false">A · QR impreso</button>
+    <button type="button" id="p-b" aria-pressed="false">B · Llave dictada</button>
+  </div>
+  <pre id="log"></pre>
+  <div class="acts">
+    <button type="button" id="p-reset">Reiniciar para la siguiente tarea</button>
+    <button type="button" id="p-close">Cerrar panel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var app = document.getElementById("app"), back = document.getElementById("b-back"), title = document.getElementById("title");
+  var screens = ["s-pregunta","s-camara","s-llave","s-fin"];
+  var current = "s-pregunta", scenario = "—", t0 = Date.now(), events = [], backs = 0;
+  function show(id){
+    current = id;
+    screens.forEach(function(s){ document.getElementById(s).hidden = (s!==id); });
+    back.hidden = (id === "s-pregunta" || id === "s-fin");
+    var dark = id === "s-camara";
+    app.classList.toggle("dark", dark); document.body.classList.toggle("darkbg", dark);
+    title.textContent = id === "s-camara" ? "Escanear código" : id === "s-llave" ? "Ingresar llave" : "Pagar con Pix";
+  }
+  function render(){
+    document.getElementById("log").textContent =
+      "Escenario: " + scenario + "   Retrocesos: " + backs + "\n" + events.join("\n");
+  }
+  function log(msg){ events.push("+" + ((Date.now()-t0)/1000).toFixed(1) + " s  " + msg); render(); }
+  function reset(){
+    t0 = Date.now(); events = []; backs = 0;
+    document.getElementById("i-llave").value = ""; document.getElementById("b-continuar").disabled = true;
+    show("s-pregunta"); log("Inicio: pantalla de la pregunta");
+  }
+  document.getElementById("o-codigo").addEventListener("click", function(){ log("Elige: Me muestran un código"); show("s-camara"); });
+  document.getElementById("o-numero").addEventListener("click", function(){ log("Elige: Me dictan un número"); show("s-llave"); });
+  back.addEventListener("click", function(){ backs++; log("Retrocede desde " + (current==="s-camara"?"cámara":"llave")); show("s-pregunta"); });
+  var inp = document.getElementById("i-llave"), typed = false;
+  inp.addEventListener("input", function(){
+    if (!typed && inp.value){ typed = true; log("Empieza a escribir la llave"); }
+    if (!inp.value) typed = false;
+    document.getElementById("b-continuar").disabled = !inp.value.trim();
+  });
+  document.getElementById("b-continuar").addEventListener("click", function(){ log("Continuar con llave: " + inp.value); show("s-fin"); });
+  var taps = 0, tapTimer = null;
+  document.getElementById("badge").addEventListener("click", function(){
+    taps++; clearTimeout(tapTimer); tapTimer = setTimeout(function(){ taps = 0; }, 800);
+    if (taps >= 3){ taps = 0; document.getElementById("panel").hidden = false; }
+  });
+  function setScen(s){ scenario = s; document.getElementById("p-a").setAttribute("aria-pressed", s.charAt(0)==="A"); document.getElementById("p-b").setAttribute("aria-pressed", s.charAt(0)==="B"); render(); }
+  document.getElementById("p-a").addEventListener("click", function(){ setScen("A · QR impreso"); });
+  document.getElementById("p-b").addEventListener("click", function(){ setScen("B · Llave dictada"); });
+  document.getElementById("p-close").addEventListener("click", function(){ document.getElementById("panel").hidden = true; });
+  document.getElementById("p-reset").addEventListener("click", function(){ reset(); document.getElementById("panel").hidden = true; });
+  reset();
+})();
+</script>

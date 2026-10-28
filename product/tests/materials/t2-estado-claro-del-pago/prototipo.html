@@ -1,0 +1,137 @@
+<title>Prototipo T2 Pix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: una sola pantalla de app a alto completo; una pantalla visible a la vez. Tema único claro, a propósito (simula la app). */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --ink:#14202b; --muted:#5d6b78; --line:#dde3e9;
+  --brand:#0f5fd7; --brand-ink:#ffffff; --bad:#c2410c; --bad-bg:#fff1e8; --ok:#15803d; --ok-bg:#e9f8ee;
+  --font:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;-webkit-tap-highlight-color:transparent}
+.app{height:100%;display:flex;flex-direction:column;max-width:440px;margin:0 auto;background:var(--bg);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:12px 20px}
+.top{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.top h1{font-size:17px;font-weight:600;margin:0}
+.badge{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px dashed var(--muted);border-radius:6px;padding:4px 8px;user-select:none;cursor:default}
+.screen{flex:1;display:flex;flex-direction:column;gap:16px;padding-top:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.row span:first-child{color:var(--muted)}
+.amount{font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em;text-align:center;padding-block:8px}
+.fake{font-size:12px;color:var(--muted);text-align:center}
+.spacer{flex:1}
+.btn{appearance:none;border:0;border-radius:12px;background:var(--brand);color:var(--brand-ink);font:600 17px var(--font);min-height:54px;width:100%;cursor:pointer}
+.btn:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.center h2{font-size:24px;margin:0;text-wrap:balance}
+.center p{margin:0;color:var(--muted);font-size:16px;max-width:30ch}
+.spin{width:56px;height:56px;border-radius:50%;border:5px solid var(--line);border-top-color:var(--brand);animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+.icon{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:36px;font-weight:700}
+.icon.bad{background:var(--bad-bg);color:var(--bad)}
+.icon.ok{background:var(--ok-bg);color:var(--ok)}
+/* Panel del facilitador: se abre tocando 3 veces la etiqueta PROTOTIPO */
+.panel{position:fixed;inset:auto 0 0 0;background:var(--ink);color:#fff;padding:16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));font-size:13px;display:flex;flex-direction:column;gap:10px;max-height:60%;overflow:auto}
+.panel pre{margin:0;white-space:pre-wrap;font:12px/1.5 ui-monospace, Menlo, monospace}
+.panel .acts{display:flex;gap:8px;flex-wrap:wrap}
+.panel button{appearance:none;border:1px solid #fff6;background:transparent;color:#fff;border-radius:8px;padding:8px 12px;font:600 13px var(--font);cursor:pointer}
+</style>
+
+<div class="app">
+  <div class="top">
+    <h1 id="title">Pagar con Pix</h1>
+    <span class="badge" id="badge" title="Prototipo de prueba">Prototipo</span>
+  </div>
+
+  <!-- 1. Monto -->
+  <section class="screen" id="s-monto">
+    <div class="card">
+      <div class="row"><span>Comercio</span><strong>Barraca do Zé</strong></div>
+      <div class="amount">R$ 35,00</div>
+    </div>
+    <p class="fake">Datos ficticios para una prueba. No se mueve dinero.</p>
+    <div class="spacer"></div>
+    <button class="btn" id="b-pagar" type="button">Pagar</button>
+  </section>
+
+  <!-- 2. Procesando -->
+  <section class="screen" id="s-proc" hidden>
+    <div class="center">
+      <div class="spin" aria-hidden="true"></div>
+      <h2>Procesando el pago</h2>
+      <p>R$ 35,00 a Barraca do Zé</p>
+    </div>
+  </section>
+
+  <!-- 3. Estado claro -->
+  <section class="screen" id="s-fallo" hidden>
+    <div class="center">
+      <div class="icon bad" aria-hidden="true">!</div>
+      <h2>No se cobró</h2>
+      <p>Puedes intentar de nuevo.</p>
+    </div>
+    <button class="btn" id="b-reintentar" type="button">Intentar de nuevo</button>
+  </section>
+
+  <!-- 4. Éxito -->
+  <section class="screen" id="s-ok" hidden>
+    <div class="center">
+      <div class="icon ok" aria-hidden="true">✓</div>
+      <h2>Pago exitoso</h2>
+      <p>R$ 35,00 a Barraca do Zé</p>
+    </div>
+  </section>
+</div>
+
+<div class="panel" id="panel" hidden>
+  <strong>Panel del facilitador</strong>
+  <pre id="log"></pre>
+  <div class="acts">
+    <button type="button" id="p-reset">Reiniciar para el siguiente participante</button>
+    <button type="button" id="p-close">Cerrar panel</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var PROCESANDO_MS = 20000;   // fijado por el diseño de T2: unos 20 s
+  var REINTENTO_MS = 4000;
+  var screens = ["s-monto","s-proc","s-fallo","s-ok"];
+  var t0 = Date.now(), tFallo = null, events = [];
+  function show(id){ screens.forEach(function(s){ document.getElementById(s).hidden = (s!==id); }); }
+  function log(msg){
+    var now = Date.now();
+    var line = "+" + ((now - t0)/1000).toFixed(1) + " s  " + msg;
+    if (tFallo !== null && msg !== "Aparece «No se cobró»") line += "  (" + ((now - tFallo)/1000).toFixed(1) + " s desde el estado)";
+    events.push(line);
+    document.getElementById("log").textContent = events.join("\n");
+  }
+  var timer = null;
+  function reset(){
+    clearTimeout(timer); t0 = Date.now(); tFallo = null; events = [];
+    log("Inicio: pantalla de monto"); show("s-monto");
+  }
+  document.getElementById("b-pagar").addEventListener("click", function(){
+    log("Toca Pagar"); show("s-proc");
+    timer = setTimeout(function(){ tFallo = Date.now(); log("Aparece «No se cobró»"); show("s-fallo"); }, PROCESANDO_MS);
+  });
+  document.getElementById("b-reintentar").addEventListener("click", function(){
+    log("Toca Intentar de nuevo"); show("s-proc");
+    timer = setTimeout(function(){ log("Aparece Pago exitoso"); show("s-ok"); }, REINTENTO_MS);
+  });
+  var taps = 0, tapTimer = null;
+  document.getElementById("badge").addEventListener("click", function(){
+    taps++; clearTimeout(tapTimer); tapTimer = setTimeout(function(){ taps = 0; }, 800);
+    if (taps >= 3){ taps = 0; document.getElementById("panel").hidden = false; }
+  });
+  document.getElementById("p-close").addEventListener("click", function(){ document.getElementById("panel").hidden = true; });
+  document.getElementById("p-reset").addEventListener("click", function(){ reset(); document.getElementById("panel").hidden = true; });
+  reset();
+})();
+</script>
